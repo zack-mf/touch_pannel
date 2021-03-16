@@ -1,0 +1,247 @@
+&tlmm{
+	pinctrl-names = "default";
+	pinctrl-0 = <&cypress_gpio_input &touch_panel_gpio_high>;
+	cypress_gpio_input: cypress_gpio_input {
+		mux{
+			pins ="gpio92";//cat_int_n
+			function = "gpio";
+		};
+		
+		config {
+			pins = "gpio92";
+			drive-strength = <6>;
+			bias-disable;
+			input-enable;
+		};
+	};
+
+	touch_panel_gpio_high: touch_panel_gpio_high {
+		mux{
+			pins =	"gpio95",//oe1
+				"gpio94";//dp_stb
+			function = "gpio"; 
+		};
+		
+		config {
+			pins = "gpio95", "gpio94";
+			drive-strength = <12>; 
+			bias-pull-up;
+			output-high;
+		};		
+	};	
+
+	aw9120_gpio_high: aw9120_gpio_high {
+		mux{
+			pins = "gpio91";//aw9120_en
+			function = "gpio"; 
+		};
+		
+		config {
+			pins = "gpio91";
+			drive-strength = <12>; 
+			bias-pull-up;
+			output-high;
+		};		
+	};	
+
+        aw9120_gpio_low: aw9120_gpio_low {
+                mux{
+                        pins = "gpio91";//aw9120_en
+                        function = "gpio";
+                };
+
+                config {
+                        pins = "gpio91";
+                        drive-strength = <12>;
+                        bias-pull-down;
+                        output-low;
+                };
+        };
+
+        cypress_reset_gpio_high: cypress_reset_gpio_high {
+                mux{
+                        pins = "gpio90";//cat_ret_n
+                        function = "gpio";
+                };
+
+                config {
+                        pins = "gpio90";
+                        drive-strength = <12>;
+                        bias-pull-up;
+                        output-high;
+                };
+        };
+
+        cypress_reset_gpio_low: cypress_reset_gpio_low {
+                mux{
+                        pins = "gpio90";//cat_ret_n
+                        function = "gpio";
+                };
+
+                config {
+                        pins = "gpio90";
+                        drive-strength = <12>;
+                        bias-pull-down;
+                        output-low;
+                };
+        };
+
+        power_cypress_gpio_input: power_cypress_gpio_input {
+                mux{
+                        pins ="gpio113";
+                        function = "gpio";
+                };
+
+                config {
+                        pins = "gpio113";
+                        drive-strength = <6>;
+                        bias-disable;
+                        input-enable;
+                };
+        };
+
+};
+
+
+&soc {
+
+        gpio_keys: gpio_keys {
+                compatible = "gpio-keys";
+                label = "gpio-keys";
+                input-name = "gpio-keys";
+                pinctrl-names = "default";
+                status = "ok";
+                pinctrl-0 = <&power_cypress_gpio_input>;
+
+                power_touch {
+                        label = "power_touch";
+                        gpios = <&tlmm 113 GPIO_ACTIVE_LOW>;
+                        linux,input-type = <1>;
+                        linux,code = <KEY_POWER>;
+                        debounce-interval = <15>;
+                        gpio-key,wakeup;
+                        linux,can-disable;
+                };
+
+        };
+
+};
+
+&i2c_2 {
+        status = "ok";
+        qcom,clk-freq-out = <400000>;
+
+        cypress_md:cypress_md@08 {
+                compatible = "cypress,cypress-md";
+                #address-cells = <1>;
+                #size-cells = <0>;
+                reg = <0x08>;
+                status = "ok";
+                //pinctrl-names = "default";
+                interrupt-gpios = <&tlmm 92 GPIO_ACTIVE_HIGH>;
+                //reset-gpios = <&tlmm 90 GPIO_ACTIVE_HIGH>;
+                wakeup-source;
+                pinctrl-names = "cypress-enabled", "cypress-disabled";
+                pinctrl-0 = <&cypress_reset_gpio_low>;
+                pinctrl-1 = <&cypress_reset_gpio_high>;
+
+		mic_mute: mic_mute{
+                        label = "mic_mute";
+                        linux,code = <KEY_MICMUTE>;
+                };
+
+                pair: pair{
+                        label = "pair";
+                        linux,code = <KEY_CONNECT>;
+                };
+
+                multyfunction: multyfunction{
+                        label = "multyfunction";
+                        linux,code = <KEY_MEDIA>;
+                };
+	};
+
+	aw9120_leds:aw9120_leds@2d {
+		compatible = "awinic,aw9120-leds";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x2d>;
+//		pinctrl-names = "default";
+		status = "ok";
+		pinctrl-names = "aw9120-enabled", "aw9120-disabled";
+		pinctrl-0 = <&aw9120_gpio_high>;
+		pinctrl-1 = <&aw9120_gpio_low>;
+		
+                //mute
+                out15@15 {
+                        label   = "mute_g";
+                        channel = <0x0E>;
+                        mc      = <0x5>;//17.5mA
+                };
+                out16@16 {
+                        label   = "mute_r";
+                        channel = <0x0F>;
+                        mc      = <0x5>;//17.5mA
+                };
+                out5@5 {
+                        label   = "mute_b";
+                        channel = <0x04>;
+                        mc      = <0x5>;//17.5mA
+                };
+
+                //pair
+                out2@2 {
+                        label   = "pair_g";
+                        channel = <0x1>;
+                        mc      = <0x4>;
+                };
+                out3@3 {
+                        label   = "pair_r";
+                        channel = <0x2>;
+                        mc      = <0x4>;
+                };
+                out4@4 {
+                        label   = "pair_b";
+                        channel = <0x3>;
+                        mc      = <0x4>;
+                };
+
+                //mufunction
+                out1@1 {
+                        label   = "mufunction_g";
+                        channel = <0x0>;
+                        mc      = <0x4>;
+                };
+                out14@14 {
+                        label   = "mufunction_r";
+                        channel = <0x0D>;
+                        mc      = <0x4>;
+                };
+                out13@13 {
+                        label   = "mufunction_b";
+                        channel = <0x0C>;
+                        mc      = <0x4>;
+                };
+
+                //cx
+                out12@12 {
+                        label   = "cx_g";
+                        channel = <0x0B>;
+                        mc      = <0x4>;
+                };
+                out11@11 {
+                        label   = "cx_r";
+                        channel = <0x0A>;
+                        mc      = <0x4>;
+                };
+                out10@10 {
+                        label   = "cx_b";
+                        channel = <0x9>;
+                        mc      = <0x4>;
+                };
+        };
+};
+
+
+
+
